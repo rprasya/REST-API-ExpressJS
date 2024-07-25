@@ -1,85 +1,76 @@
-# REST API with ExpressJS
+# Membuat REST API menggunakan ExpressJS
 
-This project demonstrates how to create a REST API using ExpressJS, including setting up routes, controllers, middleware, and integrating with a MySQL database.
+Langkah-langkah untuk membuat REST API dengan menggunakan ExpressJS:
 
-## Getting Started
-
-### Prerequisites
-
-Make sure you have Node.js and npm installed on your machine. You will also need MySQL installed and running.
-
-### Installation
-
-1. Initialize your project:
+## Persiapan
+1. Inisialisasi proyek baru:
     ```sh
     npm init -y
     ```
-
-2. Install necessary packages:
+2. Install dependencies yang dibutuhkan:
     ```sh
-    npm install express mysql2 nodemon
+    npm i express mysql2 nodemon
     ```
-
-3. Update `package.json` to use `nodemon`:
+3. Tambahkan script untuk menjalankan aplikasi di `package.json`:
     ```json
     "scripts": {
       "start": "nodemon index.js"
     }
     ```
 
-4. Create `index.js` and set up Express:
-    ```javascript
+## Membuat Server Express
+4. Buat file `index.js` dan import express:
+    ```js
     const express = require('express');
     const app = express();
-
-    app.listen(4000, () => {
-      console.log('Server running on port 4000');
-    });
-
-    app.use("/", (req, res) => {
-      res.send('This is middleware');
+    const PORT = process.env.PORT || 9000;
+    app.listen(PORT, () => {
+      console.log(`Server running di port ${PORT}`);
     });
     ```
 
-### Project Structure
-
-1. Organize your folders:
-    ```plaintext
-    project-root
-    ├── routes
-    ├── controller
-    ├── middleware
-    ├── models
-    ├── config
-    └── index.js
+## Middleware
+5. Tambahkan contoh middleware:
+    ```js
+    app.use("/", (req, res, next) => {
+      res.send('Ini middleware');
+    });
     ```
 
-2. Create `users.js` in the `routes` folder:
-    ```javascript
+## Struktur Folder
+6. Buat struktur folder sebagai berikut:
+    ```
+    /routes
+    /controller
+    /middleware
+    /models
+    /config
+    ```
+
+## Membuat Routes dan Controller
+7. Buat file `users.js` di dalam folder `routes`:
+    ```js
     const express = require('express');
     const router = express.Router();
+    const UserController = require('../controller/users');
 
-    router.get("/", (req, res) => {
-      res.json({ message: "GET all users success" });
-    });
+    router.get("/", UserController.getAllUsers);
+    router.post("/", UserController.createNewUsers);
 
     module.exports = router;
     ```
-
-3. Import and use the routes in `index.js`:
-    ```javascript
-    const usersRoutes = require('./routes/users');
-    app.use("/users", usersRoutes);
-    ```
-
-4. Create controller functions in `controller/users.js`:
-    ```javascript
+8. Buat controller di dalam `controller/users.js`:
+    ```js
     const getAllUsers = (req, res) => {
-      res.json({ message: "GET all users success" });
+      res.json({
+        message: "GET all users success",
+      });
     };
 
     const createNewUsers = (req, res) => {
-      res.json({ message: "CREATE new users success" });
+      res.json({
+        message: "CREATE new users success",
+      });
     };
 
     module.exports = {
@@ -88,124 +79,107 @@ Make sure you have Node.js and npm installed on your machine. You will also need
     };
     ```
 
-5. Update `routes/users.js` to use controller functions:
-    ```javascript
-    const UserController = require("../controller/users");
-
-    router.get("/", UserController.getAllUsers);
-    router.post("/", UserController.createNewUsers);
-    ```
-
-### Middleware
-
-1. Create a sample middleware in `index.js`:
-    ```javascript
-    app.use((req, res, next) => {
-      console.log("Request to API");
-      next();
-    });
-    ```
-
-2. Move middleware to `middleware/log.js`:
-    ```javascript
+## Middleware Logging
+9. Buat middleware logging di `middleware/log.js`:
+    ```js
     const logRequest = (req, res, next) => {
-      console.log("Request", req.path);
+      console.log("log request", req.path);
       next();
     };
 
     module.exports = logRequest;
     ```
 
-3. Import and use the middleware in `index.js`:
-    ```javascript
-    const logRequest = require("./middleware/log");
+10. Import middleware logging di `index.js`:
+    ```js
+    const logRequest = require('./middleware/log');
     app.use(logRequest);
     ```
 
-### CRUD Operations and Database Integration
-
-1. Allow JSON request bodies in `index.js`:
-    ```javascript
-    app.use(express.json());
-    ```
-
-2. Set up MySQL connection in `index.js`:
-    ```javascript
+## CRUD dan Integrasi Database
+11. Install MySQL dan buat konfigurasi di `config/database.js`:
+    ```js
     const mysql = require('mysql2');
-
     const pool = mysql.createPool({
-      host: 'localhost',
-      user: 'root',
-      database: 'test',
-      waitForConnections: true,
-      connectionLimit: 10,
-      maxIdle: 10,
-      idleTimeout: 60000,
-      queueLimit: 0,
-      enableKeepAlive: true,
-      keepAliveInitialDelay: 0,
-    });
-
-    app.use("/", (req, res) => {
-      pool.execute("SELECT * FROM users", (err, rows) => {
-        if (err) {
-          res.json({ message: "Connection Failed" });
-        } else {
-          res.json({
-            message: "Connection success",
-            data: rows,
-          });
-        }
-      });
-    });
-    ```
-
-3. Test the connection using Postman:
-    - Method: GET
-    - URL: `http://localhost:4000/`
-
-4. Move database connection setup to `config/database.js`:
-    ```javascript
-    const mysql = require('mysql2');
-
-    const pool = mysql.createPool({
-      host: 'localhost',
-      user: 'root',
-      database: 'test',
-      waitForConnections: true,
-      connectionLimit: 10,
-      maxIdle: 10,
-      idleTimeout: 60000,
-      queueLimit: 0,
-      enableKeepAlive: true,
-      keepAliveInitialDelay: 0,
+      host: process.env.DB_HOST,
+      user: process.env.DB_USERNAME,
+      password: process.env.DB_PASSWORD,
+      database: process.env.DB_NAME
     }).promise();
 
     module.exports = pool;
     ```
 
-5. Update `index.js` to use the new configuration:
-    ```javascript
-    const dbPool = require('./config/database');
+12. Buat model di `models/users.js`:
+    ```js
+    const dbPool = require('../config/database');
 
-    app.use("/", (req, res) => {
-      dbPool.execute("SELECT * FROM users", (err, rows) => {
-        if (err) {
-          res.json({ message: "Connection Failed" });
-        } else {
-          res.json({
-            message: "Connection success",
-            data: rows,
-          });
-        }
-      });
-    });
+    const getAllUsers = () => {
+      const SQLQuery = "SELECT * FROM users";
+      return dbPool.execute(SQLQuery);
+    };
+
+    module.exports = {
+      getAllUsers,
+    };
+    ```
+
+13. Update controller di `controller/users.js`:
+    ```js
+    const UsersModel = require('../models/users');
+
+    const getAllUsers = async (req, res) => {
+      try {
+        const [data] = await UsersModel.getAllUsers();
+        res.json({
+          message: "GET all users success",
+          data: data,
+        });
+      } catch (error) {
+        res.status(500).json({
+          message: "Server Error",
+          serverMessage: error,
+        });
+      }
+    };
+
+    module.exports = {
+      getAllUsers,
+    };
+    ```
+
+## Menggunakan dotenv untuk Konfigurasi
+14. Install dotenv:
+    ```sh
+    npm install dotenv
+    ```
+15. Setup dotenv di `index.js`:
+    ```js
+    require('dotenv').config();
+    ```
+16. Buat file `.env` untuk menyimpan konfigurasi rahasia:
+    ```env
+    PORT=XXXX
+    DB_HOST=localhost
+    DB_USERNAME=root
+    DB_PASSWORD=password
+    DB_NAME=your_database_name
+    ```
+
+17. Tambahkan `.env` ke `.gitignore` dan buat file `env.example`:
+    ```sh
+    .env
+    ```
+
+    ```env
+    PORT=
+    DB_HOST=
+    DB_USERNAME=
+    DB_PASSWORD=
+    DB_NAME=
     ```
 
 ## Testing
+18. Test API menggunakan Postman atau alat lain.
 
-Use Postman or any other API testing tool to test the endpoints.
-
-## Authors
-
-- **Your Name** - *Initial work* - [rprasya](https://github.com/rprasya)
+Langkah-langkah di atas seharusnya membantu Anda membuat REST API menggunakan ExpressJS dengan struktur yang terorganisir dan aman. Selamat mencoba!
