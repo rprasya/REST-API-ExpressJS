@@ -1,164 +1,176 @@
-# Membuat REST API menggunakan ExpressJS
+# Membuat REST API Menggunakan ExpressJS
 
-Langkah-langkah untuk membuat REST API dengan menggunakan ExpressJS:
+Panduan ini akan memandu Anda melalui proses pembuatan REST API sederhana menggunakan ExpressJS dan MySQL.
 
-## Persiapan
-1. Inisialisasi proyek baru:
-    ```sh
+## Langkah-langkah
+
+1. **Inisialisasi Proyek:**
+    ```bash
     npm init -y
     ```
-2. Install dependencies yang dibutuhkan:
-    ```sh
-    npm i express mysql2 nodemon
+2. **Instalasi Dependencies:**
+    ```bash
+    npm install express mysql2 nodemon
     ```
-3. Tambahkan script untuk menjalankan aplikasi di `package.json`:
+3. **Pengaturan `package.json`:**
+    Tambahkan script berikut di `package.json` untuk menjalankan server dengan nodemon:
     ```json
     "scripts": {
       "start": "nodemon index.js"
     }
     ```
-
-## Membuat Server Express
-4. Buat file `index.js` dan import express:
-    ```js
+4. **Membuat File `index.js`:**
+    Di dalam `index.js`, import express dan buat instance aplikasi:
+    ```javascript
     const express = require('express');
     const app = express();
-    const PORT = process.env.PORT || 9000;
-    app.listen(PORT, () => {
-      console.log(`Server running di port ${PORT}`);
+    app.listen(XXXX, () => {
+        console.log('Server running di port XXXX');
     });
     ```
-
-## Middleware
-5. Tambahkan contoh middleware:
-    ```js
+5. **Membuat Middleware Contoh:**
+    ```javascript
     app.use("/", (req, res, next) => {
-      res.send('Ini middleware');
+        res.send('Ini middleware');
     });
     ```
+6. **Merapikan Struktur Folder:**
+    - `routes/`: Menyimpan semua file yang berfungsi untuk routing.
+    - `controller/`: Menyimpan fungsi yang digunakan di setiap routes.
+    - `middleware/`: Menyimpan fungsi middleware.
+    - `models/`: Menyimpan fungsi untuk melakukan query ke database.
+    - `config/`: Menyimpan konfigurasi database.
 
-## Struktur Folder
-6. Buat struktur folder sebagai berikut:
-    ```
-    /routes
-    /controller
-    /middleware
-    /models
-    /config
-    ```
-
-## Membuat Routes dan Controller
-7. Buat file `users.js` di dalam folder `routes`:
-    ```js
+7. **Membuat Routing `users`:**
+    Buat file `users.js` di dalam folder `routes`:
+    ```javascript
     const express = require('express');
     const router = express.Router();
-    const UserController = require('../controller/users');
 
-    router.get("/", UserController.getAllUsers);
-    router.post("/", UserController.createNewUsers);
+    router.get("/", (req, res) => {
+        res.json({
+            message: "GET all users success",
+        });
+    });
 
     module.exports = router;
     ```
-8. Buat controller di dalam `controller/users.js`:
-    ```js
+
+8. **Menghubungkan Routing ke `index.js`:**
+    ```javascript
+    const usersRoutes = require('./routes/users.js');
+    app.use("/users", usersRoutes);
+    ```
+
+9. **Merapikan Function Routing:**
+    Pindahkan fungsi di dalam routes ke dalam folder `controller`:
+    ```javascript
+    // controllers/users.js
     const getAllUsers = (req, res) => {
-      res.json({
-        message: "GET all users success",
-      });
+        res.json({
+            message: "GET all users success",
+        });
     };
 
     const createNewUsers = (req, res) => {
-      res.json({
-        message: "CREATE new users success",
-      });
+        res.json({
+            message: "CREATE new users success",
+        });
     };
 
     module.exports = {
-      getAllUsers,
-      createNewUsers
+        getAllUsers,
+        createNewUsers
     };
     ```
 
-## Middleware Logging
-9. Buat middleware logging di `middleware/log.js`:
-    ```js
+10. **Menghubungkan Controller di Routing:**
+    ```javascript
+    const UserController = require("../controller/users");
+
+    router.get("/", UserController.getAllUsers);
+    router.post("/", UserController.createNewUsers);
+    ```
+
+11. **Membuat Middleware untuk Logging:**
+    ```javascript
     const logRequest = (req, res, next) => {
-      console.log("log request", req.path);
-      next();
+        console.log("Log request", req.path);
+        next();
     };
 
-    module.exports = logRequest;
-    ```
-
-10. Import middleware logging di `index.js`:
-    ```js
-    const logRequest = require('./middleware/log');
     app.use(logRequest);
     ```
 
-## CRUD dan Integrasi Database
-11. Install MySQL dan buat konfigurasi di `config/database.js`:
-    ```js
+12. **Mengizinkan Request Body JSON:**
+    Tambahkan middleware berikut di `index.js` untuk mengizinkan parsing JSON:
+    ```javascript
+    app.use(express.json());
+    ```
+
+13. **Mengintegrasikan Database:**
+    Buat konfigurasi database:
+    ```javascript
     const mysql = require('mysql2');
     const pool = mysql.createPool({
-      host: process.env.DB_HOST,
-      user: process.env.DB_USERNAME,
-      password: process.env.DB_PASSWORD,
-      database: process.env.DB_NAME
-    }).promise();
+        host: 'localhost',
+        user: 'root',
+        password: 'password',
+        database: 'your_database_name'
+    });
 
-    module.exports = pool;
+    module.exports = pool.promise();
     ```
 
-12. Buat model di `models/users.js`:
-    ```js
-    const dbPool = require('../config/database');
+14. **Membuat Model untuk Query Database:**
+    Buat file `models/users.js`:
+    ```javascript
+    const dbPool = require("../config/database");
 
     const getAllUsers = () => {
-      const SQLQuery = "SELECT * FROM users";
-      return dbPool.execute(SQLQuery);
+        const SQLQuery = "SELECT * FROM users";
+        return dbPool.execute(SQLQuery);
     };
 
     module.exports = {
-      getAllUsers,
+        getAllUsers,
     };
     ```
 
-13. Update controller di `controller/users.js`:
-    ```js
+15. **Menggunakan Model di Controller:**
+    ```javascript
     const UsersModel = require('../models/users');
 
-    const getAllUsers = async (req, res) => {
-      try {
-        const [data] = await UsersModel.getAllUsers();
-        res.json({
-          message: "GET all users success",
-          data: data,
-        });
-      } catch (error) {
-        res.status(500).json({
-          message: "Server Error",
-          serverMessage: error,
-        });
-      }
-    };
-
-    module.exports = {
-      getAllUsers,
+    const getAllUser = async (req, res) => {
+        try {
+            const [data] = await UsersModel.getAllUsers();
+            res.json({
+                message: "GET all users success",
+                data: data,
+            });
+        } catch (error) {
+            res.status(500).json({
+                message: "Server Error",
+                serverMessage: error,
+            });
+        }
     };
     ```
 
-## Menggunakan dotenv untuk Konfigurasi
-14. Install dotenv:
-    ```sh
+16. **Mengelola Variabel Lingkungan (Environment Variables):**
+    Instal `dotenv` dan buat file `.env` untuk menyimpan konfigurasi sensitif:
+    ```bash
     npm install dotenv
     ```
-15. Setup dotenv di `index.js`:
-    ```js
+    Di `index.js`, import dan konfigurasi dotenv:
+    ```javascript
     require('dotenv').config();
+    const PORT = process.env.PORT || 9000;
     ```
-16. Buat file `.env` untuk menyimpan konfigurasi rahasia:
-    ```env
+
+17. **Memindahkan Konfigurasi Database ke `.env`:**
+    Contoh isi `.env`:
+    ```
     PORT=XXXX
     DB_HOST=localhost
     DB_USERNAME=root
@@ -166,20 +178,45 @@ Langkah-langkah untuk membuat REST API dengan menggunakan ExpressJS:
     DB_NAME=your_database_name
     ```
 
-17. Tambahkan `.env` ke `.gitignore` dan buat file `env.example`:
-    ```sh
-    .env
+18. **Membuat CRUD di Model:**
+    - **CREATE**:
+      ```javascript
+      const createUser = (body) => {
+          const SQLQuery = `INSERT INTO users (name, email, address) 
+                            VALUES ('${body.name}','${body.email}','${body.address}')`;
+          return dbPool.execute(SQLQuery);
+      };
+      ```
+    - **UPDATE**:
+      ```javascript
+      const updateUser = (body, idUser) => {
+          const SQLQuery = `UPDATE users 
+                            SET name='${body.name}', email='${body.email}', address='${body.address}' 
+                            WHERE id=${idUser}`;
+          return dbPool.execute(SQLQuery);
+      };
+      ```
+    - **DELETE**:
+      ```javascript
+      const deleteUser = (idUser) => {
+          const SQLQuery = `DELETE FROM users WHERE id=${idUser}`;
+          return dbPool.execute(SQLQuery);
+      };
+      ```
+
+19. **Menjalankan dan Menguji API:**
+    Jalankan server:
+    ```bash
+    npm start
     ```
+    Uji endpoint dengan Postman atau aplikasi lain untuk memastikan semua CRUD operation berfungsi dengan baik.
 
-    ```env
-    PORT=
-    DB_HOST=
-    DB_USERNAME=
-    DB_PASSWORD=
-    DB_NAME=
-    ```
+20. **Mengabaikan `.env` dari Git:**
+    Tambahkan `.env` ke `.gitignore` dan buat file dummy `env.example` untuk di-commit ke repository.
 
-## Testing
-18. Test API menggunakan Postman atau alat lain.
 
-Langkah-langkah di atas seharusnya membantu Anda membuat REST API menggunakan ExpressJS dengan struktur yang terorganisir dan aman. Selamat mencoba!
+Anda telah berhasil membuat REST API sederhana menggunakan ExpressJS dan MySQL, dengan implementasi CRUD dan konfigurasi variabel lingkungan. Selamat coding!
+
+## Authors
+
+- [@rprasya](https://github.com/rprasya)
