@@ -215,7 +215,7 @@ Panduan ini akan memandu Anda melalui proses pembuatan REST API sederhana menggu
     Tambahkan `.env` ke `.gitignore` dan buat file dummy `env.example` untuk di-commit ke repository.
 
 
-Anda telah berhasil membuat REST API sederhana menggunakan ExpressJS dan MySQL, dengan implementasi CRUD dan konfigurasi variabel lingkungan. Selamat coding!
+Anda telah berhasil membuat REST API sederhana menggunakan ExpressJS dan MySQL, dengan implementasi CRUD. Semoga bermanfaat KEEP CODING AND FUN!
 
 ## Authors
 
